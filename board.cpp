@@ -8,6 +8,7 @@ using std::cerr;
 using std::min;
 using std::max;
 
+//A data type to represent a position in the board
 struct Position
 {
     int r;
@@ -44,6 +45,7 @@ int main()
     constexpr char opponent_c = 'o';
     bool player_turn = true;
     bool game_over = false;
+
     while (!game_over)
     {
         if (player_turn)
@@ -97,6 +99,8 @@ void do_player(vector<vector<char>>& board, char player_c)
     }
 }
 
+//maximizes opponent ai and minimizes player ai
+//explores all possible future moves and calls itself recursively to explore them.
 int minimax(vector<vector<char>>& board, bool ai_turn, char oppo_c, char player_c)
 {
     int state = check_win(board, 'x', 'o');
@@ -128,6 +132,8 @@ int minimax(vector<vector<char>>& board, bool ai_turn, char oppo_c, char player_
     }
 }
 
+//top level function that is called by main only once in the current run of loop
+//calls minimax for further evaluation
 void opponent_ai(vector<vector<char>>& board, char oppo_c, char player_c)
 {
     int best_score = -1;
@@ -151,6 +157,8 @@ void opponent_ai(vector<vector<char>>& board, char oppo_c, char player_c)
     board[best_move.r][best_move.c] = oppo_c;
 }
 
+//get positions of possible move that can be made i.e., empty cells in board,
+//and store them in vector
 vector<Position> get_poss_moves(const vector<vector<char>>& board)
 {
     vector<Position> positions;
@@ -222,6 +230,8 @@ int check_win(const vector<vector<char>>& board, char player_c, char opponent_c)
     return ONGOING;
 }
 
+//If the game is near end and has only one move left to tie or completing,
+//then automate that move instead of asking for player or opponent
 void auto_last_move(vector<vector<char>>& board, char player_c, char opponent_c, bool player_turn)
 {
     int occ = 0; //cells occupied
