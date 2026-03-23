@@ -1,7 +1,5 @@
 #include <iostream>
-#include <string>
 #include <vector>
-#include <random>
 
 using std::vector;
 using std::cout;
@@ -28,17 +26,15 @@ constexpr int PL_WIN = -1;
 constexpr int OP_WIN = 1;
 constexpr int ONGOING = -10;
 
-bool is_occupied(Position pos, vector<vector<char>>& board);
+bool is_occupied(Position pos, const vector<vector<char>>& board);
 void do_player(vector<vector<char>>& board, char player_c);
-void do_opponent(vector<vector<char>>& board, char oppo_c);
-void print_board(vector<vector<char>>& board);
-int check_win(vector<vector<char>>& board, char player_c, char opponent_c);
+void print_board(const vector<vector<char>>& board);
+int check_win(const vector<vector<char>>& board, char player_c, char opponent_c);
 void auto_last_move(vector<vector<char>>& board, char player_c, char opponent_c, bool player_turn);
 
 void opponent_ai(vector<vector<char>>& board, char oppo_c, char player_c);
-void player_ai(vector<vector<char>>& board, char oppo_c, char player_c);
-vector<Position> get_poss_moves(vector<vector<char>>& board);
-int minimax(vector<vector<char>>& board, bool ai_turn);
+vector<Position> get_poss_moves(const vector<vector<char>>& board);
+int minimax(vector<vector<char>>& board, bool ai_turn, char oppo_c, char player_c);
 
 int main()
 {
@@ -59,7 +55,7 @@ int main()
         else
         {
             cout << "Opponent turn:\n";
-            do_opponent(board, opponent_c);
+            opponent_ai(board, opponent_c, player_c);
             player_turn = true;
         }
 
@@ -101,12 +97,7 @@ void do_player(vector<vector<char>>& board, char player_c)
     }
 }
 
-void do_opponent(vector<vector<char>>& board, char oppo_c)
-{
-    opponent_ai(board, 'o', 'x');
-}
-
-int minimax(vector<vector<char>>& board, bool ai_turn)
+int minimax(vector<vector<char>>& board, bool ai_turn, char oppo_c, char player_c)
 {
     int state = check_win(board, 'x', 'o');
     if (state != ONGOING)
@@ -118,8 +109,8 @@ int minimax(vector<vector<char>>& board, bool ai_turn)
         int max_score = -1;
         for (Position move : possible_moves)
         {
-            board[move.r][move.c] = 'o';
-            max_score = max(minimax(board, false), max_score);
+            board[move.r][move.c] = oppo_c;
+            max_score = max(minimax(board, false, oppo_c, player_c), max_score);
             board[move.r][move.c] = EMPTY_C;
         }
         return max_score;
@@ -129,8 +120,8 @@ int minimax(vector<vector<char>>& board, bool ai_turn)
         int min_score = 1;
         for (Position move : possible_moves)
         {
-            board[move.r][move.c] = 'x';
-            min_score = min(minimax(board, true), min_score);
+            board[move.r][move.c] = player_c;
+            min_score = min(minimax(board, true, oppo_c, player_c), min_score);
             board[move.r][move.c] = EMPTY_C;
         }
         return min_score;
@@ -145,12 +136,11 @@ void opponent_ai(vector<vector<char>>& board, char oppo_c, char player_c)
     vector<Position> possible_moves = get_poss_moves(board);
     for (Position move : possible_moves)
     {
-        cout << "Possible move is (" << move.r << ',' << move.c << ")\n";
         board[move.r][move.c] = 'o';
         int state = check_win(board, 'x', 'o');
         if (state != ONGOING)
             return;
-        score = minimax(board, false);
+        score = minimax(board, false, oppo_c, player_c);
         board[move.r][move.c] = EMPTY_C;
         if (score >= best_score)
         {
@@ -158,11 +148,10 @@ void opponent_ai(vector<vector<char>>& board, char oppo_c, char player_c)
             best_move = move;
         }
     }
-    board[best_move.r][best_move.c] = 'o';
-    cout << "(" << best_move.r << "," << best_move.c << ")" << std::endl;
+    board[best_move.r][best_move.c] = oppo_c;
 }
 
-vector<Position> get_poss_moves(vector<vector<char>>& board)
+vector<Position> get_poss_moves(const vector<vector<char>>& board)
 {
     vector<Position> positions;
     for (int r = 0; r < board.size(); ++r)
@@ -178,13 +167,13 @@ vector<Position> get_poss_moves(vector<vector<char>>& board)
     return positions;
 }
 
-bool is_occupied(Position pos, vector<vector<char>>& board)
+bool is_occupied(Position pos, const vector<vector<char>>& board)
 {
     if (board[pos.r][pos.c] == EMPTY_C) return false;
     return true;
 }
 
-int check_win(vector<vector<char>>& board, char player_c, char opponent_c)
+int check_win(const vector<vector<char>>& board, char player_c, char opponent_c)
 {
     if ((board[0][0] == board[1][1] && board[1][1] == board[2][2]) || (board[0][2] == board[1][1] && board[1][1] ==
         board[2][0]))
@@ -268,7 +257,7 @@ void auto_last_move(vector<vector<char>>& board, char player_c, char opponent_c,
     }
 }
 
-void print_board(vector<vector<char>>& board)
+void print_board(const vector<vector<char>>& board)
 {
     for (const vector<char>& row : board)
     {
