@@ -45,7 +45,8 @@ int main()
     constexpr char opponent_c = 'o';
     bool player_turn = true;
     bool game_over = false;
-
+    cout << "Welcome to tictactoe.\n";
+    cout << "To place '" << player_c << "', enter row and then col as: r c\n";
     while (!game_over)
     {
         if (player_turn)
