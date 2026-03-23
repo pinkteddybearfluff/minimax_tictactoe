@@ -23,17 +23,16 @@ struct Position
 };
 
 constexpr char EMPTY_C = '.';
-constexpr char TIE = 'T';
-constexpr char NO_WIN = 'f';
-
+constexpr int TIE = 0;
+constexpr int PL_WIN = -1;
+constexpr int OP_WIN = 1;
+constexpr int ONGOING = -10;
 
 bool is_occupied(Position pos, vector<vector<char>>& board);
-
-
 void do_player(vector<vector<char>>& board, char player_c);
 void do_opponent(vector<vector<char>>& board, char oppo_c);
 void print_board(vector<vector<char>>& board);
-char check_win(vector<vector<char>>& board, char player_c, char opponent_c);
+int check_win(vector<vector<char>>& board, char player_c, char opponent_c);
 void auto_last_move(vector<vector<char>>& board, char player_c, char opponent_c, bool player_turn);
 
 void opponent_ai(vector<vector<char>>& board, char oppo_c, char player_c);
@@ -43,8 +42,7 @@ int minimax(vector<vector<char>>& board, bool ai_turn);
 
 int main()
 {
-    std::mt19937 mt{};
-
+    int state;
     vector<vector<char>> board(3, vector<char>(3, EMPTY_C));
     constexpr char player_c = 'x';
     constexpr char opponent_c = 'o';
@@ -69,23 +67,22 @@ int main()
         print_board(board);
 
         auto_last_move(board, player_c, opponent_c, player_turn);
-        char win_state2 = check_win(board, player_c, opponent_c);
-        if (win_state2 == player_c)
-        {
-            cout << "player won\n";
-            return 0;
-        }
-        if (win_state2 == opponent_c)
-        {
-            cout << "opponent won\n";
-            return 0;
-        }
-        if (win_state2 == TIE)
-        {
-            cout << "TIE\n";
-            return 0;
-        }
+        state = check_win(board, player_c, opponent_c);
+        if (state != ONGOING) game_over = true;
     }
+    switch (state)
+    {
+    case PL_WIN:
+        cout << "Player won.";
+        break;
+    case OP_WIN:
+        cout << "Opponent won.";
+        break;
+    case TIE:
+        cout << "TIE!";
+        break;
+    }
+    return 0;
 }
 
 void do_player(vector<vector<char>>& board, char player_c)
@@ -111,19 +108,10 @@ void do_opponent(vector<vector<char>>& board, char oppo_c)
 
 int minimax(vector<vector<char>>& board, bool ai_turn)
 {
-    char c1 = check_win(board, 'x', 'o');
-    if (c1 == 'x')
-    {
-        return -1;
-    }
-    if (c1 == 'o')
-    {
-        return 1;
-    }
-    if (c1 == TIE)
-    {
-        return 0;
-    }
+    int state = check_win(board, 'x', 'o');
+    if (state != ONGOING)
+        return state;
+
     vector<Position> possible_moves = get_poss_moves(board);
     if (ai_turn)
     {
@@ -159,8 +147,8 @@ void opponent_ai(vector<vector<char>>& board, char oppo_c, char player_c)
     {
         cout << "Possible move is (" << move.r << ',' << move.c << ")\n";
         board[move.r][move.c] = 'o';
-        char c = check_win(board, 'x', 'o');
-        if (c != NO_WIN)
+        int state = check_win(board, 'x', 'o');
+        if (state != ONGOING)
             return;
         score = minimax(board, false);
         board[move.r][move.c] = EMPTY_C;
@@ -196,16 +184,16 @@ bool is_occupied(Position pos, vector<vector<char>>& board)
     return true;
 }
 
-char check_win(vector<vector<char>>& board, char player_c, char opponent_c)
+int check_win(vector<vector<char>>& board, char player_c, char opponent_c)
 {
     if ((board[0][0] == board[1][1] && board[1][1] == board[2][2]) || (board[0][2] == board[1][1] && board[1][1] ==
         board[2][0]))
     {
         if (board[1][1] == player_c)
-            return player_c;
+            return PL_WIN;
 
         if (board[1][1] == opponent_c)
-            return opponent_c;
+            return OP_WIN;
     }
     //column check
     for (int i = 0; i < 3; i++)
@@ -213,9 +201,9 @@ char check_win(vector<vector<char>>& board, char player_c, char opponent_c)
         if (board[0][i] == board[1][i] && board[1][i] == board[2][i])
         {
             if (board[0][i] == player_c)
-                return player_c;
+                return PL_WIN;
             if (board[0][i] == opponent_c)
-                return opponent_c;
+                return OP_WIN;
         }
     }
     //row check
@@ -224,9 +212,9 @@ char check_win(vector<vector<char>>& board, char player_c, char opponent_c)
         if (board[i][0] == board[i][1] && board[i][1] == board[i][2])
         {
             if (board[i][0] == player_c)
-                return player_c;
+                return PL_WIN;
             if (board[i][0] == opponent_c)
-                return opponent_c;
+                return OP_WIN;
         }
     }
 
@@ -236,15 +224,13 @@ char check_win(vector<vector<char>>& board, char player_c, char opponent_c)
         for (int c = 0; c < board[0].size(); c++)
         {
             if (is_occupied(Position(r, c), board))
-            {
                 ++occupied;
-            }
         }
     }
     if (occupied == 9)
         return TIE;
 
-    return NO_WIN;
+    return ONGOING;
 }
 
 void auto_last_move(vector<vector<char>>& board, char player_c, char opponent_c, bool player_turn)
