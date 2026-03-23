@@ -68,23 +68,6 @@ int main()
         cout << "board:\n";
         print_board(board);
 
-        char win_state = check_win(board, player_c, opponent_c);
-        if (win_state == player_c)
-        {
-            cout << "player won\n";
-            return 0;
-        }
-        if (win_state == opponent_c)
-        {
-            cout << "opponent won\n";
-            return 0;
-        }
-        if (win_state == TIE)
-        {
-            cout << "TIE\n";
-            return 0;
-        }
-
         auto_last_move(board, player_c, opponent_c, player_turn);
         char win_state2 = check_win(board, player_c, opponent_c);
         if (win_state2 == player_c)
@@ -128,99 +111,40 @@ void do_opponent(vector<vector<char>>& board, char oppo_c)
 
 int minimax(vector<vector<char>>& board, bool ai_turn)
 {
-    // cout << "minimax called" << std::endl;
+    char c1 = check_win(board, 'x', 'o');
+    if (c1 == 'x')
+    {
+        return -1;
+    }
+    if (c1 == 'o')
+    {
+        return 1;
+    }
+    if (c1 == TIE)
+    {
+        return 0;
+    }
     vector<Position> possible_moves = get_poss_moves(board);
     if (ai_turn)
     {
         int max_score = -1;
-        int score;
         for (Position move : possible_moves)
         {
-            cout << "Possible move in minimax is (" << move.r << ',' << move.c << ")\n";
-            if (ai_turn)
-            {
-                board[move.r][move.c] = 'o';
-                char c1 = check_win(board, 'x', 'o');
-
-                if (c1 == 'x')
-                {
-                    board[move.r][move.c] = EMPTY_C;
-                    return -1;
-                }
-                if (c1 == 'o')
-                {
-                    board[move.r][move.c] = EMPTY_C;
-                    return 1;
-                }
-                if (c1 == TIE)
-                {
-                    board[move.r][move.c] = EMPTY_C;
-                    return 0;
-                }
-                score = minimax(board, false);
-                max_score = max(score, max_score);
-                board[move.r][move.c] = EMPTY_C;
-            }
+            board[move.r][move.c] = 'o';
+            max_score = max(minimax(board, false), max_score);
+            board[move.r][move.c] = EMPTY_C;
         }
-        char c = check_win(board, 'x', 'o');
-        if (c == 'x')
-        {
-            max_score = -1;
-        }
-        else if (c == 'o')
-        {
-            max_score = 1;
-        }
-        else if (c == TIE)
-        {
-            max_score = 0;
-        }
-        cout << "Score: " << max_score << " opponent turn" << std::endl;
         return max_score;
     }
     else
     {
         int min_score = 1;
-        int score;
         for (Position move : possible_moves)
         {
             board[move.r][move.c] = 'x';
-            char c1 = check_win(board, 'x', 'o');
-
-            if (c1 == 'x')
-            {
-                board[move.r][move.c] = EMPTY_C;
-                return -1;
-            }
-            if (c1 == 'o')
-            {
-                board[move.r][move.c] = EMPTY_C;
-                return 1;
-            }
-            if (c1 == TIE)
-            {
-                board[move.r][move.c] = EMPTY_C;
-                return 0;
-            }
-            score = minimax(board, true);
-            min_score = min(score, min_score);
+            min_score = min(minimax(board, true), min_score);
             board[move.r][move.c] = EMPTY_C;
         }
-
-        char c = check_win(board, 'x', 'o');
-        if (c == 'x')
-        {
-            min_score = -1;
-        }
-        else if (c == 'o')
-        {
-            min_score = 1;
-        }
-        else if (c == TIE)
-        {
-            min_score = 0;
-        }
-        cout << "Score: " << min_score << " player turn" << std::endl;
         return min_score;
     }
 }
@@ -236,18 +160,8 @@ void opponent_ai(vector<vector<char>>& board, char oppo_c, char player_c)
         cout << "Possible move is (" << move.r << ',' << move.c << ")\n";
         board[move.r][move.c] = 'o';
         char c = check_win(board, 'x', 'o');
-        if (c == 'x')
-        {
+        if (c != NO_WIN)
             return;
-        }
-        if (c == 'o')
-        {
-            return;
-        }
-        if (c == TIE)
-        {
-            return;
-        }
         score = minimax(board, false);
         board[move.r][move.c] = EMPTY_C;
         if (score >= best_score)
@@ -288,15 +202,10 @@ char check_win(vector<vector<char>>& board, char player_c, char opponent_c)
         board[2][0]))
     {
         if (board[1][1] == player_c)
-        {
-            // cout << "player win: ";
             return player_c;
-        }
+
         if (board[1][1] == opponent_c)
-        {
-            // cout << "oppont win: ";
             return opponent_c;
-        }
     }
     //column check
     for (int i = 0; i < 3; i++)
@@ -304,15 +213,9 @@ char check_win(vector<vector<char>>& board, char player_c, char opponent_c)
         if (board[0][i] == board[1][i] && board[1][i] == board[2][i])
         {
             if (board[0][i] == player_c)
-            {
-                // cout << "player win: ";
                 return player_c;
-            }
             if (board[0][i] == opponent_c)
-            {
-                // cout << "oppont win: ";
                 return opponent_c;
-            }
         }
     }
     //row check
@@ -321,15 +224,9 @@ char check_win(vector<vector<char>>& board, char player_c, char opponent_c)
         if (board[i][0] == board[i][1] && board[i][1] == board[i][2])
         {
             if (board[i][0] == player_c)
-            {
-                // cout << "player win: ";
                 return player_c;
-            }
             if (board[i][0] == opponent_c)
-            {
-                // cout << "oppont win: ";
                 return opponent_c;
-            }
         }
     }
 
@@ -345,10 +242,8 @@ char check_win(vector<vector<char>>& board, char player_c, char opponent_c)
         }
     }
     if (occupied == 9)
-    {
-        // cerr << "tie\n";
         return TIE;
-    }
+
     return NO_WIN;
 }
 
@@ -392,9 +287,7 @@ void print_board(vector<vector<char>>& board)
     for (const vector<char>& row : board)
     {
         for (const char col : row)
-        {
             cout << col << ' ';
-        }
         cout << '\n';
     }
 }
